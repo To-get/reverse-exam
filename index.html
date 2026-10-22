@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>期末生存指南：逆向答题 (Reverse Exam Roguelike)</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Top Global Header -->
+    <header class="top-bar" id="top-bar" style="display: none;">
+      <div class="top-bar-stats">
+        <div class="stat-item" id="top-day-badge">
+          📅 <span id="top-day-text">第 1/7 天</span>
+        </div>
+        <div class="stat-item" title="精神值 (SAN)：降到0则考场崩溃挂科！">
+          🧠 <span id="top-san-text">100/100</span>
+          <div class="stat-san-bar">
+            <div class="stat-san-fill" id="top-san-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div class="stat-item" title="生活费：用于打印店买遗物或食堂喝咖啡">
+          💰 <span id="top-money-text">80</span>元
+        </div>
+        <div class="stat-item" title="重修券：挂科时的免死金牌">
+          📜 <span id="top-retake-text">2</span>
+        </div>
+      </div>
+      <div class="top-bar-actions">
+        <button class="icon-btn" id="btn-view-relics" title="查看校园法宝遗物全图鉴">🎒 法宝(<span id="top-relics-count">1</span>)</button>
+        <button class="icon-btn" id="btn-view-deck" title="查看当前卡组与图鉴">🎴 卡组(<span id="top-deck-count">10</span>)</button>
+        <button class="icon-btn" id="btn-sound-toggle" title="音效开关">🔊</button>
+        <button class="icon-btn" id="btn-help-top" title="游戏说明">❓</button>
+      </div>
+    </header>
+
+    <!-- Relics Pill Bar -->
+    <div class="relics-bar" id="relics-bar" style="display: none;">
+      <!-- Relics populated dynamically -->
+    </div>
+
+    <!-- Screen 1: Start Screen -->
+    <section class="screen active" id="screen-start">
+      <div class="start-screen-hero">
+        <div class="game-logo-badge">🎯📚</div>
+        <h1 class="game-title">期末生存指南：逆向答题</h1>
+        <div class="game-subtitle">Reverse Exam Roguelike</div>
+        
+        <div class="game-slogan-box">
+          <div class="slogan-highlight">“60分万岁，多一分浪费，少一分挂科！”</div>
+          <div class="slogan-sub">你不是要考满分，而是要将卷子精准“蒙”到刚好60分及格！</div>
+        </div>
+
+        <!-- Highlight Grid for Wide Screens -->
+        <div class="features-showcase-grid">
+          <div class="feature-item">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-title">精准60分及格</div>
+            <div class="feature-desc">多一分浪费精力，少一分惨遭重修，压线才是神！</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🧹</div>
+            <div class="feature-title">逆向橡皮擦控分</div>
+            <div class="feature-desc">超分了？用2B橡皮擦、划掉重写把分数减回及格线！</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">☕</div>
+            <div class="feature-title">校园轻肉鸽管理</div>
+            <div class="feature-desc">白天图书馆抢座、食堂摸鱼、选购保研笔记遗物。</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">👹</div>
+            <div class="feature-title">7门魔王期末课</div>
+            <div class="feature-desc">从思修到高数大决战，迎战各类送分陷阱与精神暴击。</div>
+          </div>
+        </div>
+
+        <div class="ultimate-goal-card" style="background:#fff; border:2px solid #f59e0b; border-radius:12px; padding:12px 18px; margin-bottom:22px; max-width:620px; box-shadow:0 4px 12px rgba(245, 158, 11, 0.2);">
+          <div style="font-weight:800; color:#b45309; font-size:14px; display:flex; align-items:center; gap:6px;">
+            <span>🏆</span> 游戏终极目标：连续 7 天大考精准 60 分从容毕业
+          </div>
+          <div style="font-size:12px; color:#475569; margin-top:4px; line-height:1.4;">
+            在 7 天期末周中迎战 7 门大学必修课。每门课通过出牌与橡皮擦控分，在交卷时<strong>刚好考下 60 分压线及格</strong>，不卷多一分，不挂一门课，顺利毕业！
+          </div>
+        </div>
+
+        <div class="start-btn-group">
+          <button class="btn btn-primary btn-lg" id="btn-start-game">🚀 开始备考突击</button>
+          <button class="btn btn-danger btn-lg" id="btn-start-endless" style="display:none; background:#dc2626; border-color:#b91c1c;">🔥 挑战无尽考场 (历史最高: <span id="start-endless-streak-text">0</span>场)</button>
+          <button class="btn btn-outline" id="btn-show-rules">📖 考场规则与指南</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 2: Character Selection -->
+    <section class="screen" id="screen-char-select">
+      <div class="modal-header" style="background:#fff;">
+        <div>
+          <h2 class="modal-title">选择你的突击人设</h2>
+          <div style="font-size:12px; color:#64748b; margin-top:2px;">挑选符合你备考习惯的流派与初始法宝</div>
+        </div>
+      </div>
+      <div class="char-select-container" id="char-select-list">
+        <!-- Character cards populated via JS -->
+      </div>
+      <div class="char-select-actions">
+        <button class="btn btn-outline" id="btn-back-to-start" style="flex:1;">返回</button>
+        <button class="btn btn-primary btn-lg" id="btn-confirm-char" style="flex:2;">确认并进入第 1 天备考</button>
+      </div>
+    </section>
+
+    <!-- Screen 3: Daytime Campus Hub -->
+    <section class="screen" id="screen-day-campus">
+      <div class="campus-header">
+        <div class="campus-today-subject">
+          <span class="sub-label">今日应考科目</span>
+          <span class="sub-title" id="campus-subject-name">《思想道德与法治》</span>
+        </div>
+        <div class="ap-indicator">
+          <span>精力点</span>
+          <span id="campus-ap-text">⚡ 3 / 3</span>
+        </div>
+      </div>
+
+      <div class="campus-content">
+        <div class="campus-layout-grid">
+          <!-- Action Hub Grid -->
+          <div class="action-grid">
+            <!-- Library -->
+            <div class="action-card" id="btn-action-library">
+              <span class="action-badge">AP -1</span>
+              <div class="action-icon">📚</div>
+              <div class="action-title">图书馆抢座</div>
+              <div class="action-desc">研读真题挑牌、专项包突破，或花30元删掉杂牌。</div>
+            </div>
+
+            <!-- Cafeteria -->
+            <div class="action-card" id="btn-action-cafe">
+              <span class="action-badge">AP -1</span>
+              <div class="action-icon">☕</div>
+              <div class="action-title">食堂/咖啡摸鱼</div>
+              <div class="action-desc">买生椰拿铁回血，或特调双倍浓缩永久提升精力上限！</div>
+            </div>
+
+            <!-- Print Shop -->
+            <div class="action-card" id="btn-action-shop">
+              <span class="action-badge">自由选购</span>
+              <div class="action-icon">🖨️</div>
+              <div class="action-title">校门口打印店</div>
+              <div class="action-desc">选购法宝遗物（4B橡皮、降噪耳塞），或购买救急盲盒！</div>
+            </div>
+
+            <!-- Flea Market Used Books -->
+            <div class="action-card" id="btn-action-flea">
+              <span class="action-badge" style="background:#fef3c7; color:#b45309;">生活费直购</span>
+              <div class="action-icon">🎴</div>
+              <div class="action-title">二手书摊挑牌</div>
+              <div class="action-desc">淘二手教辅与学霸笔记，直接花费生活费购买指定核心牌！</div>
+            </div>
+
+            <!-- Random Event -->
+            <div class="action-card" id="btn-action-event">
+              <span class="action-badge">AP -1</span>
+              <div class="action-icon">🎲</div>
+              <div class="action-title">校园偶遇奇遇</div>
+              <div class="action-desc">早八点名、宿舍断电、疯狂星期四、二手群淘宝等。</div>
+            </div>
+          </div>
+
+          <!-- Exam Preview Banner -->
+          <div class="campus-exam-banner">
+            <div class="exam-banner-header">
+              <div class="exam-banner-title" id="banner-exam-name">今晚大考：《思修》</div>
+              <div class="exam-banner-diff" id="banner-exam-diff">★☆☆☆☆</div>
+            </div>
+            <div class="exam-banner-desc" id="banner-exam-desc">
+              考场难度不高，送分题多，但切记“逆向控分”：不要多答，务必在及格线收手！
+            </div>
+            <div class="exam-banner-tips">
+              💡 <strong>突击备考提示：</strong>
+              白天精力点（AP）耗尽后，点击下方按钮直接奔赴考场！
+            </div>
+            <button class="btn btn-gold btn-lg" id="btn-enter-exam" style="margin-top: 10px; width: 100%;">
+              🎒 奔赴今晚考场！
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 4: Night Exam Battle -->
+    <section class="screen" id="screen-night-exam">
+      <div class="exam-paper-container">
+        <!-- Subject & Teacher Header -->
+        <div class="exam-top-info">
+          <div>
+            <span style="font-size: 11px; color:#64748b;">期末统考试卷</span>
+            <h3 id="exam-subject-title" style="font-size: 18px;">《思想道德与法治》</h3>
+          </div>
+          <div style="font-size: 13px; font-weight:700; color:#475569;" id="exam-turn-display">
+            第 1 / 7 回合
+          </div>
+        </div>
+
+        <!-- 2-Column Battle Arena (Desktop) / Vertical Stack (Mobile) -->
+        <div class="exam-battle-arena">
+          <!-- Left Column: Teacher Boss & Intent & Battle Log -->
+          <div class="arena-left-pane">
+            <div class="teacher-intent-box">
+              <div class="teacher-avatar" id="teacher-avatar">👨‍🏫</div>
+              <div class="intent-details">
+                <div class="intent-title" id="teacher-intent-title">监考老师准备：送分题</div>
+                <div class="intent-desc" id="teacher-intent-desc">卷面强制 +6 分！</div>
+                <div class="intent-calc-preview" id="intent-calc-preview" style="font-size:11.5px; color:#b91c1c; font-weight:700; margin-top:4px;"></div>
+              </div>
+            </div>
+
+            <div class="battle-log-card">
+              <div class="battle-log-header">📝 考场实时动态与监考记录</div>
+              <div class="battle-log-ticker" id="battle-log-ticker">
+                考场准备就绪。请合理搭配加分牌与逆向减分牌！
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Score Board & Gauge & Combat Stats -->
+          <div class="arena-right-pane">
+            <!-- Core Score Dial & 60 Target Gauge -->
+            <div class="score-board" id="exam-score-board">
+              <div class="score-main-display">
+                <span class="score-current" id="exam-score-current">0</span>
+                <span class="score-divider">/</span>
+                <span class="score-target">60</span>
+              </div>
+
+              <div class="score-status-pill below" id="score-status-pill">
+                🎯 还差 60 分刚好及格
+              </div>
+
+              <div class="score-track-container">
+                <div class="score-track">
+                  <div class="score-fill" id="score-fill-bar" style="width: 0%;"></div>
+                </div>
+                <!-- 60 Pin Marker -->
+                <div class="score-marker-60">
+                  <div class="marker-line"></div>
+                  <div class="marker-label">60及格线</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Combat Stats (Sanity, Shield, Energy) -->
+            <div class="exam-player-stats" id="exam-player-stats-box">
+              <div class="player-san-shield-box" style="display:flex; align-items:center;">
+                <div style="font-weight:700; font-size:14px;">
+                  🧠 精神: <span id="exam-san-text">100/100</span>
+                </div>
+                <div class="stat-pill-shield" id="exam-shield-badge" style="background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-weight:800; font-size:12px; padding:2px 8px; border-radius:12px; display:none; margin-left:8px;">
+                  🛡️ 护盾 +0
+                </div>
+              </div>
+              <div class="energy-display">
+                <span style="font-weight:700; color:#b45309; font-size:14px;">⚡ 剩余精力: <span id="exam-energy-num" style="color:#d97706; font-size:14px; font-weight:800; margin-left:2px;">10 / 10</span></span>
+                <div class="energy-orb-container" id="energy-orbs-container">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hand Cards Area -->
+        <div class="hand-container" id="hand-container">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Exam Bottom Controls -->
+        <div class="exam-controls">
+          <div class="pile-counters">
+            <button class="pile-btn" id="btn-draw-pile" title="抽牌堆">🎴 抽牌堆(<span id="draw-pile-count">0</span>)</button>
+            <button class="pile-btn" id="btn-discard-pile" title="弃牌堆">🗑️ 弃牌堆(<span id="discard-pile-count">0</span>)</button>
+            <button class="pile-btn" id="btn-exhaust-pile" title="消耗堆">💨 消耗堆(<span id="exhaust-pile-count">0</span>)</button>
+          </div>
+
+          <div class="exam-actions-group">
+            <button class="btn btn-gold submit-btn" id="btn-submit-paper" title="随时交卷结算当前分数！">
+              🔔 提前交卷
+            </button>
+            <button class="btn btn-primary" id="btn-end-turn">
+              ⏭️ 思考下一题
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 5: Exam Settlement -->
+    <section class="screen" id="screen-settlement">
+      <div class="settlement-card">
+        <div class="stamp-seal" id="settlement-stamp">
+          <div>期末教务</div>
+          <div style="font-size:16px;">及格</div>
+        </div>
+
+        <div style="font-size: 12px; color:#64748b;" id="settlement-subject-tag">期末成绩单</div>
+        <div class="settlement-title" id="settlement-title">🎯 【神级控分·压线战神】</div>
+        
+        <div class="settlement-score-big" id="settlement-score-big">60 <span style="font-size:18px; color:#64748b;">分</span></div>
+
+        <p id="settlement-desc" style="font-size: 13px; color:#475569; line-height:1.5;">
+          多一分浪费，少一分挂科！分毫不差刚好60分及格！
+        </p>
+
+        <div class="settlement-delta-list">
+          <div class="delta-row">
+            <span>精神值变动</span>
+            <span id="settlement-san-delta" style="font-weight:700; color:#10b981;">+0</span>
+          </div>
+          <div class="delta-row">
+            <span>生活费奖励</span>
+            <span id="settlement-money-delta" style="font-weight:700; color:#f59e0b;">+50元</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Reward Picker -->
+      <div class="reward-section" id="reward-section">
+        <div style="font-weight:700; font-size:14px; text-align:center;">
+          🎁 及格通关奖励：研读新战术（选择1张加入卡组）
+        </div>
+        <div class="reward-cards-row" id="reward-cards-row">
+          <!-- Rendered via JS -->
+        </div>
+        <button class="btn btn-outline" id="btn-skip-reward" style="margin-top:6px;">跳过，不添加新牌</button>
+      </div>
+
+      <div style="padding: 16px; margin-top:auto;">
+        <button class="btn btn-primary btn-lg" id="btn-next-day" style="width: 100%;">
+          🌅 继续下一天备考
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen 6: Game Over -->
+    <section class="screen" id="screen-game-over">
+      <div class="start-screen-hero" style="background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);">
+        <div class="game-logo-badge">💀📜</div>
+        <h1 class="game-title" style="color:#991b1b;" id="gameover-title">期末生存失败</h1>
+        
+        <div class="game-slogan-box" style="border-color:#ef4444;">
+          <div class="slogan-highlight" id="gameover-reason">重修券耗尽，惨遭学籍警告！</div>
+          <div class="slogan-sub" id="gameover-detail">在第 3 天的《线性代数》中挂科。</div>
+        </div>
+
+        <button class="btn btn-danger btn-lg" id="btn-restart-game">
+          🔄 重新开启期末突击
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen 7: Victory Screen -->
+    <section class="screen" id="screen-victory">
+      <div class="start-screen-hero" style="background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%);">
+        <div class="game-logo-badge">🎓🏆</div>
+        <h1 class="game-title" style="color:#166534;">恭喜！期末周生存成功！</h1>
+        <div class="game-subtitle" style="color:#15803d;">SURVIVAL MASTER · 顺利毕业</div>
+        
+        <!-- Victory Tier Badge Card -->
+        <div id="victory-tier-box" style="margin: 10px auto; padding: 12px 18px; border-radius: 12px; background: #fff; border: 2.5px solid #22c55e; max-width: 380px; box-shadow: 0 4px 16px rgba(34,197,94,0.18);">
+          <div style="font-size:11px; font-weight:700; color:#15803d; letter-spacing:1px; text-transform:uppercase;">🏛️ 教务处最终毕业总评级</div>
+          <div id="victory-tier-title" style="font-size: 23px; font-weight: 900; color: #166534; margin: 4px 0;">🌟 SSS · 及格线之神</div>
+          <div id="victory-tier-desc" style="font-size: 12.5px; color: #374151; line-height: 1.5;">全科 7 门全部 60 分精准压线绝杀！教务处奉你为神！</div>
+        </div>
+
+        <div class="game-slogan-box" style="border-color:#22c55e; margin-bottom: 12px;">
+          <div class="slogan-highlight" id="victory-stats-highlight">7门必修大考全部及格！守住全部学分！</div>
+          <div class="slogan-sub" id="victory-stats-sub">🎯 精准控分 60 分命中数：7 / 7 门</div>
+        </div>
+
+        <div style="width: 100%; max-width: 380px; background:#fff; border-radius:12px; padding:14px; margin-bottom:16px; font-size:13px; text-align:left; box-shadow: 0 2px 10px rgba(0,0,0,0.06);">
+          <div style="font-weight:700; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📊 期末放榜战绩汇总：</span>
+            <span style="font-size:11.5px; color:#16a34a; font-weight:700; background:#dcfce7; padding:2px 8px; border-radius:10px;">7科全通</span>
+          </div>
+          <div id="victory-summary-list" style="display:flex; flex-direction:column; gap:4px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <button class="btn btn-danger btn-lg" id="btn-enter-endless" style="margin-bottom:10px; width: 100%; max-width: 380px; background:#dc2626; border-color:#b91c1c;">
+          🔥 挺进无尽期末修罗场 (连胜挑战)
+        </button>
+        <button class="btn btn-success btn-lg" id="btn-victory-restart" style="width: 100%; max-width: 380px;">
+          🎉 开启新学期突击挑战
+        </button>
+      </div>
+    </section>
+
+    <!-- Modal: Campus Event -->
+    <div class="modal-overlay" id="modal-event">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title" id="event-title">早八突击点名</div>
+        </div>
+        <div class="modal-body">
+          <div style="font-size: 32px; text-align:center; margin-bottom:8px;" id="event-icon">⏰</div>
+          <p id="event-desc">辅导员突击查勤，你该怎么办？</p>
+          <div class="event-options-list" id="event-options-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Library Study (Pick Card or Refine Deck) -->
+    <div class="modal-overlay" id="modal-library">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">📚 图书馆自习室</div>
+          <button class="icon-btn" id="btn-close-library">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 12px; font-size:13px; color:#64748b;">
+            请选择你要进行的自习项目（消耗 1 点 AP）：
+          </p>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="event-option-btn" id="btn-lib-study-cards">
+              <div class="opt-text">📖 研读历年真题</div>
+              <div class="opt-effect">从3张随机考场秘策卡牌中挑选1张加入卡组。</div>
+            </div>
+            <div class="event-option-btn" id="btn-lib-thematic-pack">
+              <div class="opt-text">🎯 专项教研突破包 (15元)</div>
+              <div class="opt-effect">定向指定分值牌/扣分牌/减压牌/战术牌，针对性3选1研读！</div>
+            </div>
+            <div class="event-option-btn" id="btn-lib-delete-card">
+              <div class="opt-text">✂️ 整理杂乱笔记（精炼卡组）</div>
+              <div class="opt-effect">花费 30 元生活费，永久从卡组中移除1张不需要的杂牌。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Cafeteria & Rest -->
+    <div class="modal-overlay" id="modal-cafe">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">☕ 食堂与咖啡角</div>
+          <button class="icon-btn" id="btn-close-cafe">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 12px; font-size:13px; color:#64748b;">
+            复习太累了？适度摸鱼能有效治愈考试焦虑（消耗 1 点 AP）：
+          </p>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="event-option-btn" id="btn-buy-latte">
+              <div class="opt-text">🥤 点一杯超大杯生椰拿铁 (25元)</div>
+              <div class="opt-effect">精神值大幅恢复 +32 点！</div>
+            </div>
+            <div class="event-option-btn" id="btn-buy-espresso">
+              <div class="opt-text">☕ 特调双倍浓缩冰美式 (35元)</div>
+              <div class="opt-effect">永久提升考场精力上限 +1 点！（当前上限：<span id="cafe-max-energy-val">10</span> 点）</div>
+            </div>
+            <div class="event-option-btn" id="btn-take-nap">
+              <div class="opt-text">😴 在自习角落趴桌小憩 (免费)</div>
+              <div class="opt-effect">精神值轻度恢复 +15 点。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Print Shop (Relics) -->
+    <div class="modal-overlay" id="modal-shop">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">🖨️ 校门口打印店</div>
+          <button class="icon-btn" id="btn-close-shop">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;">
+            <span>老板：“考前特供法宝，买到就是及格！”</span>
+            <span style="font-weight:700; color:#f59e0b;">余额: <span id="shop-money-text">80</span>元</span>
+          </div>
+          <div class="shop-grid" id="shop-items-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Flea Market Used Books -->
+    <div class="modal-overlay" id="modal-flea">
+      <div class="modal-content" style="max-width: 760px;">
+        <div class="modal-header">
+          <div class="modal-title">🎴 二手书摊 (学长学姐核心卡直购)</div>
+          <button class="icon-btn" id="btn-close-flea">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:13px; background:#fef3c7; border:1px solid #fde68a; padding:8px 14px; border-radius:8px;">
+            <span style="color:#92400e;">💡 学长寄语：“毕业教辅明码标价，想要哪张核心卡直接花生活费带走，不消耗白天精力！”</span>
+            <span style="font-weight:700; color:#b45309; white-space:nowrap;">生活费: <span id="flea-money-text">80</span>元</span>
+          </div>
+          <div class="flea-grid" id="flea-items-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Full Deck Viewer & Compendium -->
+    <div class="modal-overlay" id="modal-deck">
+      <div class="modal-content" style="max-width: 820px;">
+        <div class="modal-header">
+          <div class="modal-title" id="deck-modal-title">🎴 当前卡组全览</div>
+          <button class="icon-btn" id="btn-close-deck">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- Top Tab Switcher -->
+          <div class="deck-tabs-container" id="deck-tabs-container" style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+            <button class="tab-btn active" id="tab-btn-current-deck" style="flex:1; padding:8px 12px; border-radius:8px; border:none; background:#2563eb; color:#fff; font-weight:700; cursor:pointer; font-size:13px; transition:all 0.2s;">
+              🎴 当前卡组 (<span id="deck-tab-count">0</span> 张)
+            </button>
+            <button class="tab-btn" id="tab-btn-all-cards" style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-weight:700; cursor:pointer; font-size:13px; transition:all 0.2s;">
+              📚 卡牌全图鉴 (共 <span id="compendium-total-count">64</span> 种 · 卡组已收录 <span id="compendium-unlocked-count">0</span> 种)
+            </button>
+          </div>
+
+          <!-- Compendium Filter Bar -->
+          <div id="compendium-filter-bar" style="display:none; flex-wrap:wrap; gap:6px; margin-bottom:10px; align-items:center;">
+            <span style="font-size:12px; color:#64748b; font-weight:700;">分类筛选:</span>
+            <button class="filter-pill active" data-filter="all">全部 (64)</button>
+            <button class="filter-pill" data-filter="in_deck">已在卡组</button>
+            <button class="filter-pill" data-filter="score">分值牌 (20)</button>
+            <button class="filter-pill" data-filter="reverse">逆向扣分 (14)</button>
+            <button class="filter-pill" data-filter="chill">摸鱼减压 (15)</button>
+            <button class="filter-pill" data-filter="strategy">策略战术 (15)</button>
+          </div>
+
+          <!-- Remove Deck Tip -->
+          <div id="deck-remove-tip" style="display:none; background:#fee2e2; color:#b91c1c; padding:8px 12px; border-radius:8px; margin-bottom:10px; font-size:12px;">
+            💡 请点击你想要永久移除的卡牌（花费 30 元生活费）：
+          </div>
+
+          <!-- Compendium Banner Tip -->
+          <div id="compendium-banner-tip" style="display:none; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-size:12px; line-height:1.6;">
+            <strong>📖 卡牌图鉴与获取状态说明：</strong><br>
+            <span style="display:inline-block; margin-right:12px;">🟢 <strong>在当前卡组中 (×N)</strong>：你当前的牌库已持有该卡牌</span>
+            <span style="display:inline-block; margin-right:12px;">🔵 <strong>已解锁·通用池</strong>：平时可在自习室研读或大考及格三选一中自由获取</span>
+            <span style="display:inline-block;">🟣 <strong>进阶秘策·特定事件</strong>：可在二手笔记拍卖、特定校园偶遇或高阶事件中获取</span>
+          </div>
+
+          <!-- Card View Grid -->
+          <div class="deck-grid" id="deck-view-grid">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Relics Compendium (校园法宝全图鉴) -->
+    <div class="modal-overlay" id="modal-relics">
+      <div class="modal-content" style="max-width: 820px;">
+        <div class="modal-header">
+          <div class="modal-title">🎒 校园法宝全图鉴 (共 13 件 · 已装备 <span id="relics-modal-owned-count">1</span> 件)</div>
+          <button class="icon-btn" id="btn-close-relics">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="background:#fef3c7; border:1px solid #fde68a; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:12.5px; line-height:1.6; color:#92400e;">
+            <strong>💡 法宝遗物（Relics）规则说明：</strong><br>
+            法宝遗物拥有极其强大的常驻被动能力！<strong>所有已获得的法宝跨天永久继承</strong>（包括无尽模式中持续生效），伴随你的整个大学备考生涯。每件法宝都有独特的实战用途与获取途径。
+          </div>
+          <div class="relics-compendium-grid" id="relics-compendium-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Rules & Guide -->
+    <div class="modal-overlay" id="modal-rules">
+      <div class="modal-content" style="max-width: 760px;">
+        <div class="modal-header">
+          <div class="modal-title">📖 期末考场生存守则与机制全解</div>
+          <button class="icon-btn" id="btn-close-rules">✕</button>
+        </div>
+        <div class="modal-body" style="font-size: 13.5px; line-height:1.7;">
+          <!-- 1. 详细说明通关要求 -->
+          <div style="background:linear-gradient(135deg, #fef3c7, #fde68a); border:1.5px solid #f59e0b; border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+            <h4 style="color:#b45309; margin-bottom:6px; font-size:15px; display:flex; align-items:center; gap:6px;">
+              <span>🏆 通关要求详解：必须七场都刚好60分吗？</span>
+            </h4>
+            <p style="color:#78350f; font-size:12.8px; line-height:1.6; margin-bottom:8px;">
+              <strong>答：并不是七场考试都必须刚好 60 分才能通关！</strong>
+            </p>
+            <ul style="margin: 0 0 8px 18px; color:#78350f; font-size:12.5px; line-height:1.6;">
+              <li><strong>单科及格底线</strong>：每场考试最终得分 <strong>≥ 60 分</strong> 即可及格通过，并进入下一天的备考！若得分低于 60 分挂科，只要拥有重修券，会扣除 1 张重修券抢救通过。</li>
+              <li><strong>期末周总通关条件</strong>：完成全部 7 天、考完 7 门必修大考，且学籍未被注销（中途未在精神为0时重修券耗尽退学），即可<strong>【期末周生存成功（顺利毕业）】</strong>！</li>
+              <li><strong>为什么要追求刚好 60 分？</strong><br>
+                “60分万岁，多一分浪费！”不仅是精神图腾，也是游戏核心策略：
+                <br>• <strong>刚好 60 分</strong>：【神级控分·压线战神】<strong>精神值 (SAN) 立即全额回满 100 点</strong>，获得最高 <strong>60 元全额奖学金</strong>！
+                <br>• <strong>61 ~ 65 分</strong>：及格通过，但精力轻微浪费，精神 -5 点，生活费 +35 元。
+                <br>• <strong>66 ~ 79 分</strong>：严重超纲，过度内卷身心俱疲，精神 -15 点，生活费 +20 元。
+                <br>• <strong>80 分以上</strong>：严重卷王，遭同学白眼，精神暴跌 -30 点，生活费仅 +10 元！
+              </li>
+            </ul>
+            <div style="background:rgba(255,255,255,0.7); border-radius:8px; padding:8px 12px; margin-top:8px;">
+              <strong style="color:#b45309; font-size:12.5px;">🎓 毕业终极荣誉评级（GPA Rating System）：</strong>
+              <div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
+                • <strong style="color:#b45309;">🌟 SSS【及格线之神·天选躺平人】</strong>：7 门全部正好 60 分压线绝杀！大学传说神迹！<br>
+                • <strong style="color:#047857;">🥇 S【考场控分大师】</strong>：命中 4 ~ 6 门精准 60 分，其余稳稳及格。<br>
+                • <strong style="color:#1d4ed8;">🥈 A【稳健实用主义者】</strong>：命中 1 ~ 3 门精准 60 分，其余及格顺利升学。<br>
+                • <strong style="color:#475569;">🥉 B【惊险上岸人】</strong>：全科及格通过，但未命中 60 分或曾消耗重修券抢救。
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 关卡难度决定因素 -->
+          <div style="background:#f1f5f9; border:1.5px solid #cbd5e1; border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+            <h4 style="color:#334155; margin-bottom:6px; font-size:15px;">⚡ 关卡难度由什么因素决定？</h4>
+            <p style="color:#475569; font-size:12.5px; line-height:1.5; margin-bottom:8px;">
+              从 Day 1 的《思修》到 Day 7 的《高数下》，难度呈现梯次上升，由以下四大维度共同决定：
+            </p>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:#334155;">
+              <div style="background:#fff; padding:8px 10px; border-radius:6px; border-left:3px solid #ef4444;">
+                <strong style="color:#b91c1c;">1. 监考老师意图攻击性与精神折磨数值递增</strong><br>
+                • Day 1 思修：伤害仅 6~8 点，甚至会闭目养神（0伤害）。<br>
+                • Day 4 大物：伤害升至 12~18 点，伴随难题暴击与强力施压。<br>
+                • Day 7 高数下：意图伤害高达 <strong>18~25 点</strong>！监考老师死亡凝视，两回合即可打崩 100 精神！
+              </div>
+
+              <div style="background:#fff; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
+                <strong style="color:#d97706;">2. 各科目的专属考场干扰与陷阱机制</strong><br>
+                • <strong>《大学物理》&《高数下》【致命送分陷阱】</strong>：题目看似简单，动笔直接强制 +8、+12 分，容易瞬间冲破 60 分导致超纲惨死，逼迫玩家常备强力橡皮擦！<br>
+                • <strong>《线性代数》【符号倒扣陷阱】</strong>：正负号极易混淆，卷面分不足时扣分会触发【答题卡擦穿】，转化为直接精神伤害！<br>
+                • <strong>《大学英语》&《计科》【死锁与强制弃牌】</strong>：生词轰炸直接弃掉关键手牌，逻辑死锁扣减下一回合 AP 精力。<br>
+                • <strong>《概率论》【正态随机波动】</strong>：掷骰子与正态扰动使分值上下跳跃，难以精确定格。
+              </div>
+
+              <div style="background:#fff; padding:8px 10px; border-radius:6px; border-left:3px solid #3b82f6;">
+                <strong style="color:#2563eb;">3. 考试时限与回合高压</strong><br>
+                前期科目 7 回合交卷，后期大考 8 回合。回合越多承受精神折磨总量越高（若无护盾，7回合可能承受 100+ 点累计伤害）。超时未交卷将被教务处强制收卷！
+              </div>
+
+              <div style="background:#fff; padding:8px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong style="color:#6d28d9;">4. 跨天资源滚雪球与身心损耗效应</strong><br>
+                精神值 (SAN)、生活费、重修券全部跨天继承！前一天控分失误超纲（拿到 80 分卷王），第二天将以残血低精神开局（低于 30% SAN 心率警报），易猝死；生活费不足则无法在白天喝咖啡回血或去书店删牌。越早精简卡组，后续越轻松！
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. 伤害机制与护盾计算 -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#2563eb; margin-bottom:6px;">🛡️ 伤害计算、精神折磨与护盾机制</h4>
+            <ul style="margin: 0 0 8px 18px; font-size:12.5px;">
+              <li><strong>精神值 (SAN / HP)</strong>：你在考场的心理承受极限（上限100）。受到难题压力或自残牌反噬时扣除。</li>
+              <li><strong>精神护盾 (Shield 🛡️)</strong>：心态自信结界！<strong>护盾 100% 优先吸收</strong>所有受到的精神伤害。</li>
+              <li><strong>伤害计算公式</strong>：<br>
+                <code>最终实际扣除精神 = Math.max(0, 基础伤害 × 遗物减免 - 当前护盾值)</code><br>
+                例如：老师巡视造成 12 点伤害，你拥有 8 点护盾，则护盾抵消 8 点，实际仅扣除 4 点精神！若护盾 ≥ 12 点，精神值毫发无损！
+              </li>
+            </ul>
+          </div>
+
+          <!-- 4. 精神不足与校医室急救 -->
+          <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#991b1b; margin-bottom:6px;">💔 精神不足时的机制与【校医室急救】</h4>
+            <p style="color:#7f1d1d; font-size:12.5px; line-height:1.5;">
+              • <strong>心率高压预警</strong>：精神值低于 30% 时，考场进入红色警戒状态。<br>
+              • <strong>免死金牌（校医室速效救心丸）</strong>：当考场中精神值因伤害归零时，只要你拥有<strong>重修券 (Retakes > 0)</strong>，就会立即消耗 1 张重修券触发急救！监考老师掐人中、校医紧急抢救，<strong>精神值立即恢复至 35 点，并获得 8 点应急护盾</strong>绝处逢生继续答题！仅当重修券为 0 且精神归零时，才会真正退学 Game Over。
+            </p>
+          </div>
+
+          <!-- 5. 分数不足与答题卡擦穿机制 -->
+          <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#be123c; margin-bottom:6px;">🧹 分数不足时的【答题卡擦穿反噬机制】</h4>
+            <p style="color:#881337; font-size:12.5px; line-height:1.5;">
+              卷面得分下限为 <strong>0 分</strong>（不会出现负分）。<br>
+              若当前分数不足（例如卷面仅 2 分，打出【划掉重写 -8 分】）或当前分数为 0 分时强行打出扣分牌：<br>
+              • <strong>答题卡擦破反噬</strong>：溢出的扣分量（如溢出 6 分）会把薄薄的答题卡擦破磨穿，转化为等额的<strong>精神压力反噬伤害</strong>！<br>
+              • <strong>破罐破摔护盾</strong>：由于卷子都擦破了索性豁出去了，<strong>额外获得 5 点应急心理护盾，并补抽 1 张手牌</strong>！
+            </p>
+          </div>
+
+          <!-- 6. 考制底分与细腻微调控分技巧 -->
+          <div style="background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#065f46; margin-bottom:6px;">📋 真实大学考制：20分平时出勤底分与数值平滑调控</h4>
+            <p style="color:#047857; font-size:12.5px; line-height:1.6;">
+              每门考试开局自动计入 <strong>20 点平时作业考勤底分</strong>！卡牌数值经过细腻平衡重构（告别大起大落的断崖式浮动，单卡加分 +2~+7，减分 -1~-6，并提供大量 +1/-1 精确点杀牌）。配合初始 10 点考场精力，每回合可稳健打出 3~4 张牌，细腻把控卷面分数向 60 分稳步逼近！
+            </p>
+          </div>
+
+          <!-- 7. 10点考场精力机制与手牌可用张数深度适配 -->
+          <div style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#b45309; margin-bottom:6px;">⚡ 考场 10 点精力 (AP) 机制与可用手牌张数深度适配</h4>
+            <div style="color:#78350f; font-size:12.5px; line-height:1.6;">
+              • <strong>精力独立与全额重置</strong>：考场精力（初始上限 <strong>10 点</strong>）独立于白天行动 AP。每回合开始精力全额回满。<br>
+              • <strong>可用手牌张数全面提升（适配 10 点 AP）</strong>：
+              <div style="margin: 4px 0 6px 12px; font-size:12px;">
+                - <strong>每回合基础抽牌提升至 6 张</strong>（角色“通宵狂魔”为 7 张，配合遗物【速效脑黄金】可达 7~8 张）！<br>
+                - <strong>手牌容纳上限提升至 10 张</strong>（避免打出抽牌战术卡时溢出爆牌）。<br>
+                - <strong>深度博弈连招</strong>：平均单卡消耗 2~3 AP，玩家每回合可从 6~8 张手牌中自由构思并打出 <strong>3 ~ 5 张牌</strong>（例如：1张主力分值牌 + 1张护盾防御牌 + 2张逆向微调牌），精力与手牌完美消耗，战术自由度拉满！
+              </div>
+              • <strong>如何提升考场精力上限？</strong><br>
+              在白天食堂咖啡角点选<strong>【特调双倍浓缩冰美式 (35元)】</strong>可永久提升考场精力上限 +1 点！此外收集法宝遗物<strong>【金质超强大脑】(+2精力)</strong>或<strong>【高能魔爪饮料罐】(+1精力)</strong>可进一步突破精力瓶颈（角色“通宵狂魔”天生自带 11 点上限）。
+            </div>
+          </div>
+
+          <!-- 8. 卡组扩充与补充的 5 大途径全解 -->
+          <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#1e40af; margin-bottom:6px;">🎴 卡组扩充与补充的 5 大途径全解</h4>
+            <p style="color:#1e3a8a; font-size:12.5px; line-height:1.5; margin-bottom:6px;">
+              现拥有 64 种丰富卡牌，你可以通过以下 5 种途径在期末周灵活构建你的专属考场流派：
+            </p>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:12.2px; color:#1e3a8a;">
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #3b82f6;">
+                <strong>① 大考及格战利品三选一（考完必送）</strong>：每场考试只要得分 ≥60 分及格，放榜后系统自动提供 3 张考场秘策卡牌供挑选 1 张收录（也可跳过保持卡组紧凑）。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #6366f1;">
+                <strong>② 图书馆·研读历年真题（日常自习）</strong>：白天前往图书馆消耗 1 点 AP，从 3 张随机真题秘策中挑选 1 张扩充卡组。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>③ 图书馆·专项教研突破包（定向抽牌）</strong>：消耗 1 点 AP + 15 元生活费，可自选定向类型（分值牌/逆向扣分/摸鱼减压/策略战术），针对性 3 选 1，缺啥补啥！
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
+                <strong>④ 二手书摊·生活费明码标价直购（免耗精力）</strong>：校内二手书摊每日上架 3 张学长学姐核心教辅笔记，不消耗白天 AP，直接花费 20~55 元生活费自选带走！
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #ec4899;">
+                <strong>⑤ 校门口打印店·考前划重点盲盒（可重复抽卡）</strong>：打印店常驻 25 元神秘盲盒，即买即拆，随机获得 1 张全图鉴卡牌，资金充裕时可连续抽卡碰运气！
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. 无尽模式机制与连胜挑战 -->
+          <div style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <h4 style="color:#991b1b; margin-bottom:6px;">🔥 无尽模式（Endless Mode）与连胜修罗场</h4>
+            <div style="color:#7f1d1d; font-size:12.5px; line-height:1.6;">
+              • <strong>开启资格</strong>：顺利存活通过前 7 天全部本科必修大考并毕业后，无尽模式正式激活（可在胜利放榜界面点击进入，亦可在主界面直接发起挑战）！<br>
+              • <strong>魔王科目循环</strong>：轮番迎战《量子物理》、《泛函分析》、《代数拓扑》、《操作系统与编译》、《终极毕业论文答辩》等魔王级课程！<br>
+              • <strong>难度动态暴涨公式</strong>：连胜场次越多（Streak），监考老师的精神折磨伤害与题目意图数值按照 <code>基础伤害 + 连胜数 × 2</code> 逐级飞升，考场环境极为严苛！<br>
+              • <strong>连续通关持久化记录</strong>：系统会自动记录并刷新你的【历史最高无尽连续通关场数】（Endless Best Streak），看看你能在这座永无止境的期末修罗场中鏖战多少场！
+            </div>
+          </div>
+
+          <!-- 10. 校园法宝遗物全解：获得途径与实战用途详解 -->
+          <div style="background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:10px; padding:12px 14px;">
+            <h4 style="color:#6d28d9; margin-bottom:6px;">🎒 校园法宝遗物全解：获得途径与实战用途详解</h4>
+            <p style="color:#5b21b6; font-size:12.5px; line-height:1.5; margin-bottom:8px;">
+              法宝遗物（Relics）是你在期末周生存与逆向控分的最强倚仗！<strong>所有获得的法宝跨天永久保留并在无尽模式中持续生效</strong>。
+            </p>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:#4c1d95;">
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🧽 4B大号考试橡皮 (65元)</strong><br>
+                • <strong>实战用途</strong>：所有逆向（减分）牌的效果额外增加 2 点扣减值！微调大额降分更省力。<br>
+                • <strong>获得方式</strong>：【压线战神】初始自带 / 校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🎏 考神锦鲤手机壁纸 (75元)</strong><br>
+                • <strong>实战用途</strong>：考场中所有随机概率事件必定触发最优大吉结果（骰子必掷6点、偷瞄100%成功）！<br>
+                • <strong>获得方式</strong>：【摆烂锦鲤】初始自带 / 校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🍶 老式保温杯泡枸杞 (70元)</strong><br>
+                • <strong>实战用途</strong>：每回合开始自动恢复 5 点精神护盾！全程提供多达 35~40 点护盾吸收。<br>
+                • <strong>获得方式</strong>：【通宵狂魔】初始自带 / 校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>✏️ 正品中华2B涂卡铅笔 (80元)</strong><br>
+                • <strong>实战用途</strong>：打出分值牌时 30% 几率返还 1 点考场精力，支持单回合 4~6 张牌连招！<br>
+                • <strong>获得方式</strong>：校门口打印店选购 / 二手群奇遇捡漏。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🎧 强效降噪耳塞 (60元)</strong><br>
+                • <strong>实战用途</strong>：监考老师巡视施压和倒计时交卷带来的精神伤害直接减半 (降低 50%)！硬抗高难Boss神物。<br>
+                • <strong>获得方式</strong>：校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🔋 全宿舍唯一的充电宝 (55元)</strong><br>
+                • <strong>实战用途</strong>：免疫白天断网断电负面事件，且每天早晨自动白得 15 元生活费。<br>
+                • <strong>获得方式</strong>：宿舍断电事件选对选项 / 校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>📒 保研学长的救命笔记 (90元)</strong><br>
+                • <strong>实战用途</strong>：每门大考开局卷面自动额外获得 12 分起评分（底分提升至 32 分），极速通关！<br>
+                • <strong>获得方式</strong>：校门口打印店特供 / 二手群手写密卷事件。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🍬 无糖强劲薄荷含片 (50元)</strong><br>
+                • <strong>实战用途</strong>：受到任何精神伤害时固定减免 2 点（最少减至 1 点），与护盾叠加防守极其稳固。<br>
+                • <strong>获得方式</strong>：校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>💳 充好巨款的学生饭卡 (65元)</strong><br>
+                • <strong>实战用途</strong>：白天在食堂/咖啡角摸鱼喝拿铁的恢复效果提升 100%（生椰拿铁一次回满 64 精神）！<br>
+                • <strong>获得方式</strong>：校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🧪 速效脑黄金口服液 (85元)</strong><br>
+                • <strong>实战用途</strong>：考场精力上限永久 +2 点，每轮大考开局抽牌额外 +1 张（手牌多达 7~8 张）！<br>
+                • <strong>获得方式</strong>：校门口打印店高阶特供 / 走廊偶遇老导师称赞。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>📿 红牛拉环纪念手绳 (75元)</strong><br>
+                • <strong>实战用途</strong>：考场精力上限永久 +1 点，每门大考第一回合额外爆发获得 2 点精力！<br>
+                • <strong>获得方式</strong>：校门口打印店选购 / 疯狂星期四聚餐事件。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🧘 加厚防潮自习坐垫 (60元)</strong><br>
+                • <strong>实战用途</strong>：每回合结束时若精力耗尽为 0，触发心流，下回合开局额外多抽 1 张牌！<br>
+                • <strong>获得方式</strong>：校门口打印店选购。
+              </div>
+              <div style="background:#fff; padding:6px 10px; border-radius:6px; border-left:3px solid #8b5cf6;">
+                <strong>🎁 期末急救锦囊盲盒 (25元/次)</strong><br>
+                • <strong>实战用途</strong>：购买即拆！从全图鉴 64 种卡牌中随机抽取 1 张加入卡组，可反复购买。<br>
+                • <strong>获得方式</strong>：校门口打印店常驻供应。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas class="confetti-canvas" id="confetti-canvas"></canvas>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
